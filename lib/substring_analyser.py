@@ -47,9 +47,11 @@ Higher values for min_length and min_occurrences produce less results and slight
 
     def process_data(self, text, i):
         '''Splits spaced texts into a list of strings, then populates the dictionary entry for the text.'''
-        self.punctuation = '([{}]+)'.format(re.escape('\'!"()*,./:;<>?[]{} \n\t'))
         if self.spaced:
+            self.punctuation = '([{}]+)'.format(re.escape('\'!"()*,./:;<>?[]{} \n\t'))
             text = re.split(self.punctuation, text)
+        else:
+            self.punctuation = '([{}]+)'.format(re.escape(' \n\t。、（）「」　？・'))
         results = self.get_repeats(text)
         d = {'text': text, 'results' : results, 'clean_results' : []}
         d['output'] = self.get_output(d)
@@ -68,10 +70,7 @@ Higher values for min_length and min_occurrences produce less results and slight
             if len(edge) >= 1: # Filters out single-letter strings and empty strings
                 substring = st.word[node.idx:node.idx + node.depth]
                 occurrences = len(node._get_leaves())
-                if self.spaced:
-                    length = len(list(s for s in substring if not re.search(self.punctuation, s)))
-                else:
-                    length = len(substring)
+                length = len(list(s for s in substring if not re.search(self.punctuation, s)))
                 if (occurrences >= self.min_occurrences) and (length >= self.min_length):
                     repeats.append((substring, occurrences))
             for (n,_) in node.transition_links:
@@ -112,10 +111,7 @@ Higher values for min_length and min_occurrences produce less results and slight
         common_substrings = []
         for node in common_nodes:
             substring = gst.word[node.idx:node.idx+node.depth]
-            if self.spaced:
-                length = len(list(s for s in substring if not re.search(self.punctuation, s)))
-            else:
-                length = len(substring)
+            length = len(list(s for s in substring if not re.search(self.punctuation, s)))
             if length >= self.min_length:
                 common_substrings.append((substring,node.generalized_idxs))
 

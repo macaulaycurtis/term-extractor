@@ -28,6 +28,7 @@ class GUI(tk.Frame):
 
         self.last_loc = self.config['input_path']
         self.files = []
+        self.te = TextExtractor()
 
         # OPTION VARIABLES #
         self.spaced = tk.BooleanVar()
@@ -161,13 +162,15 @@ class GUI(tk.Frame):
         self.sa = SubstringAnalyser(spaced=self.spaced.get()
                                 , min_occurrences=self.min_occurrences.get()
                                 , min_length=self.min_length.get())
-        self.sa.load(list(
-            [(f['path'].name, f['text']) for f in self.files]
-            ))
-        self.sa.load_common()
-        self.progress_bar.stop()
+        try:
+            self.sa.load(list([(f['path'].name, f['text']) for f in self.files]))
+            self.sa.load_common()
+        except Exception as e:
+            messagebox.showerror('Error analysing files', 'Error analysing files:\n{}'.format(e))
+            return
+        finally:
+            self.progress_bar.stop()
         self.save()
-        
 
     def setup_context_menu(self):
         
@@ -198,10 +201,11 @@ class GUI(tk.Frame):
             f = Path(f)
             self.extract_text(f)
             self.last_loc = str(f.root)
+        self.te.cleanup()
 
     def extract_text(self, f, password=''):
         try:
-            text = str(TextExtractor(f, password))
+            text = self.te.extract_text(f, password)
             self.files.append({'path' : f, 'text' : text})
             self.input_box.insert('end', '{} ({})'.format(f.name, f))
             self.go_button.config(state='active')
@@ -238,14 +242,19 @@ class GUI(tk.Frame):
                     continue
                 else:
                     return
+            except Exception as e:
+                messagebox.showerror('Error saving file', 'Error saving file:\n{}'.format(e))
             finally:
                 self.progress_bar.stop()
                 self.go_button.config(state='active')
         yesopen = messagebox.askyesno(title='Output', message='Output saved to {}. Open in Excel?'.format(filepath.name))
         if yesopen:
-            excel = client.DispatchEx('Excel.Application')
-            excel.Visible = 1
-            wb = excel.Workbooks.Open(filepath)
+            try:
+                excel = client.DispatchEx('Excel.Application')
+                excel.Visible = 1
+                wb = excel.Workbooks.Open(filepath)
+            except Exception as e:
+                messagebox.showerror('Error', 'Error:\n{}'.format(e))
             
     def change_option(self, option, var):
         '''Saves changes to options to the config file.'''

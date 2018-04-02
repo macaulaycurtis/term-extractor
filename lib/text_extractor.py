@@ -8,12 +8,11 @@ from pywintypes import com_error
 
 class TextExtractor():
 
-    def __init__(self, filepath, password=''):
-        self.text = self.extract_text(filepath, password)
-
-    def __str__(self):
-        return self.text
-    
+    def __init__(self):
+        self.word = None
+        self.excel = None
+        self.pwpt = None
+        
     def extract_text(self, filepath, password=''):
         filetype = filepath.suffix
     
@@ -74,10 +73,11 @@ class TextExtractor():
         if (password == '') or (not isinstance(password, str)):
             password = ' '
         try:
-            word = client.DispatchEx('Word.Application')
             in_file = path.abspath(filepath)
-            word.Visible = 0
-            doc = word.Documents.Open(in_file, 0, 1, 0, password)
+            if self.word == None:
+                self.word = client.DispatchEx('Word.Application')
+                self.word.Visible = 0
+            doc = self.word.Documents.Open(in_file, 0, 1, 0, password)
             text = doc.Content.Text
             doc.Close()
             text = re.sub('\r', '\n', text)
@@ -86,9 +86,6 @@ class TextExtractor():
                 raise Exception('Incorrect password.')
             else:
                 raise
-        finally:
-            if word.Documents.count == 0:
-                word.Quit()
         return text
 
     def extract_xlsx(self, filepath, password=''):
@@ -108,14 +105,17 @@ class TextExtractor():
         if (password == '') or (not isinstance(password, str)):
             password = ' '
         try:
-            excel = client.DispatchEx('Excel.Application')
             in_file = path.abspath(filepath)
-            excel.Visible = 0
-            wb = excel.Workbooks.Open(in_file, 0, 1, None, password)
+            if self.excel == None:
+                self.excel = client.DispatchEx('Excel.Application')
+                self.excel.Visible = 0
+            wb = self.excel.Workbooks.Open(in_file, 0, 1, None, password)
             full_text = []
             for sheet in wb.Sheets:
-                for row in sheet.UsedRange.Rows:
-                    rowtext = '\t'.join(str(r) for r in row.Columns if str(r) != 'None')
+                usedrange = sheet.UsedRange()
+                if usedrange == None: continue
+                for row in usedrange:
+                    rowtext = '\t'.join(str(cell) for cell in row if cell != None)
                     full_text.append(rowtext)
             text = '\n'.join(full_text)
             wb.Close()
@@ -124,9 +124,6 @@ class TextExtractor():
                 raise Exception('Incorrect password.')
             else:
                 raise
-        finally:
-            if excel.Workbooks.count == 0:
-                excel.Quit()
         return text
 
     def extract_pptx(self, filepath, password=''):
@@ -138,20 +135,21 @@ class TextExtractor():
                 full_text.append(slidetext)
             text = '\n'.join(full_text)
         except Exception:
-            text = open_in_powerpoint(filepath, password)
+            text = self.open_in_powerpoint(filepath, password)
         return text
 
     def open_in_powerpoint(self, filepath, password=''):
         try:
-            pwpt = client.DispatchEx('Powerpoint.Application')
             in_file = path.abspath(filepath)
+            if self.pwpt == None:
+                self.pwpt = client.DispatchEx('Powerpoint.Application')
             if (password == '') or (not isinstance(password, str)):
-                ppt = pwpt.Presentations.Open(in_file, 1, 0, 0)
+                ppt = self.pwpt.Presentations.Open(in_file, 1, 0, 0)
             else:
-                window = pwpt.ProtectedViewWindows.Open(in_file, password)
+                window = self.pwpt.ProtectedViewWindows.Open(in_file, password)
                 ppt = window.Presentation
             full_text = []
-            for slide in ppt.Slides:
+            for slide in ppt.Slides:         
                 slidetext = '\t'.join(shape.TextFrame.TextRange.Text for shape in slide.Shapes if shape.HasTextFrame)
                 full_text.append(slidetext)
             text = '\n'.join(full_text)
@@ -164,11 +162,21 @@ class TextExtractor():
                 raise Exception('Incorrect password.')
             else:
                 raise
-        finally:
-            if pwpt.Presentations.count == 0:
-                pwpt.Quit()
         return text
+
+    def cleanup(self):
+        if (not self.word == None) and (self.word.Documents.count == 0):
+            self.word.Quit()
+            self.word = None
+        if (not self.excel == None) and (self.excel.Workbooks.count == 0):
+            self.excel.Quit()
+            self.excel = None
+        if (not self.pwpt == None) and (self.pwpt.Presentations.count == 0):
+            self.pwpt.Quit()
+            self.pwpt = None
 
 if __name__ == '__main__':
     from pathlib import Path
-    print(TextExtractor(Path('a.pptx'), 'a'))
+    te = TextExtractor()
+    print(te.extract_text(Path('a.pptx'), 'a'))
+    te.cleanup()
