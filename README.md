@@ -1,32 +1,19 @@
-## CLI GLOSSARY MANAGER
+## TERM EXTRACTOR
 
-An early attempt at a CSV-based, all text glossary manager in Python 3. Uses an old (1.x) version of the Prompt Python text-based UI library.  
-  
-I learned a lot about Win32 trying to make the global hotkeys work and having it work with old .xls files (read only).  
-All of this was working back in the day, but it is essentially no longer functional due to various dependencies being out of date.
+This is an experiment in trying to find long, repeating substrings in a document to facilitate coordinating translations. The idea is that words and sentences that appear repeatedly throughout a document likely to represent an important idea, so if multiple translators are working on the project, these substrings should be loaded into a shared glossary beforehand so that the translators can ensure consistency.
 
-![Screenshot of the CLI in action displaying and adding entries.](glossary_manager.PNG)
- 
- ### GENERAL HELP
+### How it works
 
-Type a keyword to search for it. You can cancel any operation with Ctrl + Z.  
-Default values can be changed by editing the file "config.ini".  
+The program itself uses a simple TKinter GUI and a very complicated tree-based search algorithm (modified from [this project](https://github.com/ptrus/suffix-trees)) to search for the longest repeating substrings in a document.  
 
- ### OTHER COMMANDS  
+![Screenshot of the GUI.](term-extractor-ui.PNG)
 
-QUIT:    Print a whimsical message then quit. Deregister the global hotkey.  
-SHOW:    Show the results of the last search.  
-         ARGS: the maximum number of search results to display.  
-LIST:    List all the currently loaded glossaries.  
-DEL:     Delete an entry. (ARGS: the number of the search result to delete.)  
-ADD:     Add an entry to the active glossary. (ARGS: the source value of the new entry to be added.)  
-SET:     Set the active glossary. (ARGS: arg = the short name of the glossary to set as active.)  
-EDIT:    Edit an entry by creating a sub-prompt. (ARGS: the number of the search result to edit.)  
-SAVE:    Save a modified glossary. Print a list of the glossaries saved. (ARGS: the short name of the glossary to save.)  
-RELOAD:  Reload a glossary from file. (ARGS: the short name of the glossary to reload.)  
-NEW:     Add a new empty glossary.  
-HELP:    Print this help message.  
-FUZZY:   Fuzzy search for a keyword. (ARGS: the search keyword. RETURNS: search results, ordered by relevance.)  
-CONVERT: Convert an excel-formatted glossary file to the much faster CSV. (ARGS: the short name of the glossary to convert.) 
-MOVE:    Move a term from one glossary to another. (SYNTAX: "MOVE 0 to MAIN". ARGS: Search result number; short name of target.)  
-SEARCH:  Search for a keyword. (ARGS: the search keyword.)
+When a document is processed, the program outputs any repeating substrings to a filtered list in excel for easy sharing in the office.
+
+![Screenshot of the output in Excel.](term-extractor-output.PNG)
+
+## Retrospective
+
+This project was entertaining and educational, and long-term has been my most useful piece of programming. I have used it effectively in a few large translation projects. If I was going to work on it again, I would incorporate a tokenizer and search for repeating patterns of tokens, rather than strings of characters, which would probably provide more useful results. The tree search principle itself is one that I haven't seen applied to any other translation software, so I'm quite proud of having made this work.  
+
+The compiled .exe release still works on Windows 11, but the python code itself relies on some outdated libraries to work with various input files. Free to a good home.
