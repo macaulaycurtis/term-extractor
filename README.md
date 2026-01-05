@@ -1,4 +1,9 @@
-An early attempt at a CSV-based, all text glossary manager in Python 3. Uses an old (1.x) version of the Prompt Python text-based UI library.
+## CLI GLOSSARY MANAGER
+
+An early attempt at a CSV-based, all text glossary manager in Python 3. Uses an old (1.x) version of the Prompt Python text-based UI library.  
+  
+I learned a lot about Win32 trying to make the global hotkeys work and having it work with old .xls files (read only).  
+All of this was working back in the day, but it is essentially no longer functional due to various dependencies being out of date.
 
 ![Screenshot of the CLI in action displaying and adding entries.](glossary_manager.PNG)
  
